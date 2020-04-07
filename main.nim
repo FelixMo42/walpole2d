@@ -11,31 +11,35 @@ type Entity = ref object
     center: Circle
     velocity: Vector
 
-proc `+` (a: Vector, b: Vector): Vector =
-    Vector(x: a.x + b.x, y: a.y + b.y)
-
-proc `-` (a: Vector, b: Vector): Vector =
-    Vector(x: a.x - b.x, y: a.y - b.y)
-
 proc distanceSqr(a: Vector, b: Vector): int =
     (a.x - b.x) ^ 2 + (a.y - b.y) ^ 2
-
-proc isMoving(entity: Entity): bool =
-    entity.velocity.x == 0 and entity.velocity.y == 0
 
 proc moveEntity(entity: Entity) =
     entity.center.position.x += entity.velocity.x
     entity.center.position.y += entity.velocity.y
 
-#
-
 proc collidesWith(a: Entity, b: Entity): bool = 
-    0 > (a.center.radius + b.center.radius) ^ 2
+    (
+        (a.center.position.x + a.velocity.x - b.center.position.x - b.velocity.x) ^ 2 +
+        (a.center.position.y + a.velocity.y - b.center.position.y - b.velocity.y) ^ 2
+    ) > (a.center.radius + b.center.radius) ^ 2
+
+proc vectorDot(u: Vector, v: Vector): int =
+    (u.x * v.x) + (u.y * v.y)
 
 proc limitMovement(a: Entity, b: Entity) =
-    discard "hi"
+    var velocity = Vector(
+        x: a.velocity.x + b.velocity.x,
+        y: a.velocity.y + b.velocity.y
+    )
 
-#
+    var dot = vectorDot( a.center.position,  )
+
+    a.velocity.x = 0
+    a.velocity.y = 0
+
+    b.velocity.x = 0
+    b.velocity.y = 0
 
 proc handleEntityBundle(bundle: seq[Entity]) =
     if (bundle.len() == 1):
@@ -71,8 +75,6 @@ proc update(entities: var seq[Entity]) =
                     # we have a new entity to add to our bundle, increment the count by one
                     bundleEnd += 1
 
-                    echo "i: ", i, "j: ", j, "end: ", bundleEnd
-
                     # flip the whatever is at the end of the bundle with what we just found
                     var outher = entities[bundleEnd]
                     entities[bundleEnd] = entities[j]
@@ -84,8 +86,7 @@ proc update(entities: var seq[Entity]) =
         # move up to where the last bundle ended
         bundleStart = bundleEnd + 1
 
-
-########################################################################
+############################################################
 
 var entities = @[
     Entity(
