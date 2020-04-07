@@ -23,25 +23,35 @@ proc distanceSqr(a: Vector, b: Vector): int =
 proc isMoving(entity: Entity): bool =
     entity.velocity.x == 0 and entity.velocity.y == 0
 
-proc collidesWith(a: Circle, b: Circle): bool = 
-    distanceSqr(a.position, b.position) < (a.radius + b.radius) ^ 2
-
-proc collidesWith(a: Entity, b: Entity): bool = 
-    0 < (a.center.radius + b.center.radius) ^ 2
-
 proc moveEntity(entity: Entity) =
     entity.center.position.x += entity.velocity.x
     entity.center.position.y += entity.velocity.y
+
+#
+
+proc collidesWith(a: Entity, b: Entity): bool = 
+    0 > (a.center.radius + b.center.radius) ^ 2
+
+proc limitMovement(a: Entity, b: Entity) =
+    discard "hi"
+
+#
 
 proc handleEntityBundle(bundle: seq[Entity]) =
     if (bundle.len() == 1):
         moveEntity( bundle[0] )
         return
 
-    for i in 0 .. < bundle.len() - 1:
-        for j in i + 1 .. < bundle.len():
-            if collidesWith( bundle[i], bundle[j] ):
-                echo "We have a collision!"
+    var done = false
+
+    while not done:
+        done = true
+
+        for i in 0 .. < bundle.len() - 1:
+            for j in i + 1 .. < bundle.len():
+                if collidesWith( bundle[i], bundle[j] ):
+                    limitMovement( bundle[i], bundle[j] )
+                    done = false
 
 proc couldCollideWith(a: Entity, b: Entity): bool =
     (
@@ -49,20 +59,33 @@ proc couldCollideWith(a: Entity, b: Entity): bool =
         (a.velocity.y + b.velocity.y + a.center.radius + b.center.radius) ^ 2
     ) > distanceSqr(a.center.position, b.center.position)
 
+proc update(entities: var seq[Entity]) =
+    var bundleStart = 0
 
-proc update(entities: seq[Entity]) =
-    for i in 0 .. < entities.len() - 1:
-        var entity = entities[i]
+    while bundleStart < entities.len():
+        var bundleEnd = bundleStart
 
-        var bundle = @[entity]
+        for i in bundleStart..bundleEnd:
+            for j in  (bundleEnd + 1)..(entities.len() - 1):
+                if couldCollideWith(entities[i], entities[j]):
+                    # we have a new entity to add to our bundle, increment the count by one
+                    bundleEnd += 1
 
-        for j in i + 1 .. < entities.len():
-            if couldCollideWith(entity, entities[j]):
-                bundle.add( entities[j] )
+                    echo "i: ", i, "j: ", j, "end: ", bundleEnd
 
-        handleEntityBundle(bundle)
+                    # flip the whatever is at the end of the bundle with what we just found
+                    var outher = entities[bundleEnd]
+                    entities[bundleEnd] = entities[j]
+                    entities[j] = outher
 
-###
+        # deal with the small bundle of entities
+        handleEntityBundle( entities[bundleStart..bundleEnd] )
+
+        # move up to where the last bundle ended
+        bundleStart = bundleEnd + 1
+
+
+########################################################################
 
 var entities = @[
     Entity(
