@@ -3,37 +3,44 @@ import math
 type Vector = ref object
     x, y: int
 
-type Circle = ref object
+type Entity = ref object
     position: Vector
+    velocity: Vector
     radius: int
 
-type Entity = ref object
-    center: Circle
-    velocity: Vector
+proc `+` (a: Vector, b: Vector): Vector =
+    Vector(x: a.x + b.x, y: a.y + b.y)
+
+proc `-` (a: Vector, b: Vector): Vector =
+    Vector(x: a.x - b.x, y: a.y - b.y)
 
 proc distanceSqr(a: Vector, b: Vector): int =
     (a.x - b.x) ^ 2 + (a.y - b.y) ^ 2
 
+proc magnitudeSqr(vector: Vector): int =
+    vector.x ^ 2 + vector ^ 2
+
 proc moveEntity(entity: Entity) =
-    entity.center.position.x += entity.velocity.x
-    entity.center.position.y += entity.velocity.y
+    entity.position.x += entity.velocity.x
+    entity.position.y += entity.velocity.y
 
 proc collidesWith(a: Entity, b: Entity): bool = 
     (
-        (a.center.position.x + a.velocity.x - b.center.position.x - b.velocity.x) ^ 2 +
-        (a.center.position.y + a.velocity.y - b.center.position.y - b.velocity.y) ^ 2
-    ) > (a.center.radius + b.center.radius) ^ 2
+        (a.position.x + a.velocity.x - b.position.x - b.velocity.x) ^ 2 +
+        (a.position.y + a.velocity.y - b.position.y - b.velocity.y) ^ 2
+    ) > (a.radius + b.radius) ^ 2
 
 proc vectorDot(u: Vector, v: Vector): int =
     (u.x * v.x) + (u.y * v.y)
 
 proc limitMovement(a: Entity, b: Entity) =
-    var velocity = Vector(
-        x: a.velocity.x + b.velocity.x,
-        y: a.velocity.y + b.velocity.y
-    )
+    var velocity = a.velocity + b.velocity
 
-    var dot = vectorDot( a.center.position,  )
+    var distance = a.position - b.position
+
+    var lengthSqr = magnitudeSqr( velocity )
+
+    var radius = a.radius + b.radius
 
     a.velocity.x = 0
     a.velocity.y = 0
@@ -59,9 +66,9 @@ proc handleEntityBundle(bundle: seq[Entity]) =
 
 proc couldCollideWith(a: Entity, b: Entity): bool =
     (
-        (a.velocity.x + b.velocity.x + a.center.radius + b.center.radius) ^ 2 +
-        (a.velocity.y + b.velocity.y + a.center.radius + b.center.radius) ^ 2
-    ) > distanceSqr(a.center.position, b.center.position)
+        (a.velocity.x + b.velocity.x + a.radius + b.radius) ^ 2 +
+        (a.velocity.y + b.velocity.y + a.radius + b.radius) ^ 2
+    ) > distanceSqr(a.position, b.position)
 
 proc update(entities: var seq[Entity]) =
     var bundleStart = 0
@@ -90,19 +97,15 @@ proc update(entities: var seq[Entity]) =
 
 var entities = @[
     Entity(
-        center: Circle(
-            position: Vector(x: 0, y: 15),
-            radius: 10
-        ),
-        velocity: Vector(x: 0, y: 5)
+        position: Vector(x: 0, y: 15),
+        velocity: Vector(x: 0, y: 5),
+        radius: 10
     ),
 
     Entity(
-        center: Circle(
-            position: Vector(x: 0, y: 0),
-            radius: 10
-        ),
-        velocity: Vector(x: 0, y: -5)
+        position: Vector(x: 0, y: 0),
+        velocity: Vector(x: 0, y: -5),
+        radius: 10
     )
 ]
 
