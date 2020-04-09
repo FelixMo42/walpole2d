@@ -37,9 +37,7 @@ proc limitMovement(a: Entity, b: Entity) =
     var velocity = a.velocity + b.velocity
 
     var distance = a.position - b.position
-
-    var lengthSqr = magnitudeSqr( velocity )
-
+    
     var radius = a.radius + b.radius
 
     a.velocity.x = 0
